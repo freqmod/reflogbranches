@@ -68,5 +68,8 @@ if nr and nr < len(branches) + 1:
     print "Select branch", nr, branches[nr - 1]
     # Must use git instead of libgit to do checkout to get correct info in the reflog
     subprocess.call(["git", "checkout", branches[nr - 1]], cwd=os.path.join(repo_path, os.path.pardir))
+    if os.path.exists(os.path.join(repo_path, os.path.pardir, ".gitmodules")):
+        subprocess.call(["git", "submodule", "foreach", "git", "submodule", "update"], cwd=os.path.join(repo_path, os.path.pardir))
+        print "Updated submodule"
 else:
     print "Cannot find a branch matching your input"
