@@ -4,6 +4,10 @@ import re, os, subprocess, sys
 reflogparse = re.compile(r"(?P<ooid>[0-9a-f]+) (?P<noid>[0-9a-f]+) (?P<name>.*?) (?P<email><.*?>) (?P<time>\d+) \+(?P<time_offset>\d+)\t?(?P<message>.*)$")
 checkout_move = re.compile(r"checkout: moving from (?P<from>.*?) to (?P<to>.*?)$")
 
+if len(sys.argv) >= 2:
+  filter = re.compile(str(sys.argv[1]))
+else:
+  filter = re.compile(r".*")
 
 class logitem(object):
     def __init__(self, line):
@@ -51,10 +55,13 @@ for item in reversed(log):
     if hasattr(item, "move_from") and item.move_from in known_branches and item.move_from not in [branch for branch in branches]:
         branches.append(item.move_from)
 
+filtered_branches = [branch for branch in branches if filter.search(branch)]
 # Print & prompt user
-for i, branch in enumerate(branches[0:40]):
+for i, branch in enumerate(filtered_branches[0:40]):
     print i + 1, branch
 print "?"
+sys.stdout.flush()
+
 input_str = sys.stdin.readline()
 
 # Checkout selected path
@@ -64,10 +71,10 @@ try:
 except:
     pass
 
-if nr and nr < len(branches) + 1:
-    print "Select branch", nr, branches[nr - 1]
+if nr and nr < len(filtered_branches) + 1:
+    print "Select branch", nr, filtered_branches[nr - 1]
     # Must use git instead of libgit to do checkout to get correct info in the reflog
-    subprocess.call(["git", "checkout", branches[nr - 1]], cwd=os.path.join(repo_path, os.path.pardir))
+    subprocess.call(["git", "checkout", filtered_branches[nr - 1]], cwd=os.path.join(repo_path, os.path.pardir))
     if os.path.exists(os.path.join(repo_path, os.path.pardir, ".gitmodules")):
         subprocess.call(["git", "submodule", "foreach", "git", "submodule", "update"], cwd=os.path.join(repo_path, os.path.pardir))
         print "Updated submodule"
