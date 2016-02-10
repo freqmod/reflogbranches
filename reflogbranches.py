@@ -4,10 +4,20 @@ import re, os, subprocess, sys
 reflogparse = re.compile(r"(?P<ooid>[0-9a-f]+) (?P<noid>[0-9a-f]+) (?P<name>.*?) (?P<email><.*?>) (?P<time>\d+) \+(?P<time_offset>\d+)\t?(?P<message>.*)$")
 checkout_move = re.compile(r"checkout: moving from (?P<from>.*?) to (?P<to>.*?)$")
 
+select_idx = None
+filter_str = re.compile(r".*")
+
 if len(sys.argv) >= 2:
-  filter = re.compile(str(sys.argv[1]))
-else:
-  filter = re.compile(r".*")
+    try:
+        select_idx = int(sys.argv[1])
+    except ValueError:
+        filter_str = re.compile(str(sys.argv[1]))
+        if len(sys.argv) >= 3:
+            try:
+                select_idx = int(sys.argv[2])
+            except ValueError:
+                pass
+
 
 class logitem(object):
     def __init__(self, line):
@@ -55,21 +65,27 @@ for item in reversed(log):
     if hasattr(item, "move_from") and item.move_from in known_branches and item.move_from not in [branch for branch in branches]:
         branches.append(item.move_from)
 
-filtered_branches = [branch for branch in branches if filter.search(branch)]
+filtered_branches = [branch for branch in branches if filter_str.search(branch)]
 # Print & prompt user
 for i, branch in enumerate(filtered_branches[0:40]):
     print i + 1, branch
 print "?"
 sys.stdout.flush()
 
-input_str = sys.stdin.readline()
+if len(filtered_branches) == 1:
+    print "Only one branch matching."
+    nr = 1
+elif select_idx is None:
+    input_str = sys.stdin.readline()
 
-# Checkout selected path
-nr = None
-try:
-    nr = int(input_str)
-except:
-    pass
+    # Checkout selected path
+    nr = None
+    try:
+        nr = int(input_str)
+    except:
+        pass
+else:
+    nr = select_idx
 
 if nr and nr < len(filtered_branches) + 1:
     print "Select branch", nr, filtered_branches[nr - 1]
