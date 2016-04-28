@@ -21,7 +21,7 @@ if len(sys.argv) >= 2:
 
 class logitem(object):
     def __init__(self, line):
-        for name, value in reflogparse.match(line).groupdict().iteritems():
+        for name, value in reflogparse.match(line).groupdict().items():
             setattr(self, name, value)
         movematch = checkout_move.match(self.message)
         if movematch:
@@ -49,12 +49,12 @@ while True:
 # Parse log
 log_contents = None
 with open(os.path.join(repo_path, "logs", "HEAD"), 'rb') as lh:
-    log_contents = lh.read()
+    log_contents = lh.read().decode("utf-8")
 log = [logitem(line) for line in log_contents.split("\n") if line]
 
 # Get all known branches from git
 git = subprocess.Popen(["git", "branch", "-a"], cwd=os.path.join(repo_path, os.path.pardir), stdout=subprocess.PIPE)
-git_output = git.communicate()[0]
+git_output = git.communicate()[0].decode("utf-8")
 known_branches = [extracted_branch.strip() for extracted_branch in git_output.split("\n")]
 
 # Create unique sorted branch list
@@ -68,12 +68,12 @@ for item in reversed(log):
 filtered_branches = [branch for branch in branches if filter_str.search(branch)]
 # Print & prompt user
 for i, branch in enumerate(filtered_branches[0:40]):
-    print i + 1, branch
-print "?"
+    print(i + 1, branch)
+print("?")
 sys.stdout.flush()
 
 if len(filtered_branches) == 1:
-    print "Only one branch matching."
+    print("Only one branch matching.")
     nr = 1
 elif select_idx is None:
     input_str = sys.stdin.readline()
@@ -88,11 +88,11 @@ else:
     nr = select_idx
 
 if nr and nr < len(filtered_branches) + 1:
-    print "Select branch", nr, filtered_branches[nr - 1]
+    print("Select branch", nr, filtered_branches[nr - 1])
     # Must use git instead of libgit to do checkout to get correct info in the reflog
     subprocess.call(["git", "checkout", filtered_branches[nr - 1]], cwd=os.path.join(repo_path, os.path.pardir))
     if os.path.exists(os.path.join(repo_path, os.path.pardir, ".gitmodules")):
         subprocess.call(["git", "submodule", "foreach", "git", "submodule", "update"], cwd=os.path.join(repo_path, os.path.pardir))
-        print "Updated submodule"
+        print("Updated submodule")
 else:
-    print "Cannot find a branch matching your input"
+    print("Cannot find a branch matching your input")
