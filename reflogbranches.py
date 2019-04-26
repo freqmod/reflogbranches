@@ -1,4 +1,4 @@
-#! python
+#!/usr/bin/env python
 # (C) GPLv3 Frederik M.J. Vestre - 2014, 2015
 import re, os, subprocess, sys
 reflogparse = re.compile(r"(?P<ooid>[0-9a-f]+) (?P<noid>[0-9a-f]+) (?P<name>.*?) (?P<email><.*?>) (?P<time>\d+) \+(?P<time_offset>\d+)\t?(?P<message>.*)$")
